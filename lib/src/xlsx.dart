@@ -212,11 +212,20 @@ class XlsxDecoder extends SpreadsheetDecoder {
     parent.children.remove(foundRow);
   }
 
-  void updateCell(String sheet, int columnIndex, int rowIndex, dynamic value) {
+  /// Update a cell of [sheet] at [columnIndex], [rowIndex] with [value]
+  ///
+  /// Use [keepAttributes] to preserve cell attributes such as styling.
+  void updateCell(
+    String sheet,
+    int columnIndex,
+    int rowIndex,
+    dynamic value, {
+    bool keepAttributes = false,
+  }) {
     super.updateCell(sheet, columnIndex, rowIndex, value);
 
     var foundRow = _findRowByIndex(_sheets[sheet], rowIndex);
-    _updateCell(foundRow, columnIndex, rowIndex, value);
+    _updateCell(foundRow, columnIndex, rowIndex, value, keepAttributes);
   }
 
   _parseRelations() {
@@ -478,7 +487,12 @@ class XlsxDecoder extends SpreadsheetDecoder {
   }
 
   static XmlElement _updateCell(
-      XmlElement node, int columnIndex, int rowIndex, dynamic value) {
+    XmlElement node,
+    int columnIndex,
+    int rowIndex,
+    dynamic value,
+    bool keepAttributes,
+  ) {
     XmlElement cell;
     var cells = _findCells(node);
 
@@ -494,7 +508,14 @@ class XlsxDecoder extends SpreadsheetDecoder {
     if (cell == null || currentIndex != columnIndex) {
       cell = _insertCell(node, cell, columnIndex, rowIndex, value);
     } else {
-      cell = _replaceCell(node, cell, columnIndex, rowIndex, value);
+      cell = _replaceCell(
+        node,
+        cell,
+        columnIndex,
+        rowIndex,
+        value,
+        keepAttributes,
+      );
     }
 
     return cell;
@@ -531,10 +552,23 @@ class XlsxDecoder extends SpreadsheetDecoder {
     return cell;
   }
 
-  static XmlElement _replaceCell(XmlElement row, XmlElement lastCell,
-      int columnIndex, int rowIndex, dynamic value) {
+  static XmlElement _replaceCell(
+    XmlElement row,
+    XmlElement lastCell,
+    int columnIndex,
+    int rowIndex,
+    dynamic value,
+    bool keepAttributes,
+  ) {
     var index = lastCell == null ? 0 : row.children.indexOf(lastCell);
     var cell = _createCell(columnIndex, rowIndex, value);
+    if (lastCell != null && keepAttributes) {
+      cell = XmlElement(
+        XmlName('c'),
+        lastCell.attributes.map((a) => a.copy()),
+        cell.children.map((c) => c.copy()),
+      );
+    }
     row.children
       ..removeAt(index)
       ..insert(index, cell);
