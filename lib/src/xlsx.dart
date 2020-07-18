@@ -567,7 +567,8 @@ class XlsxDecoder extends SpreadsheetDecoder {
         XmlName('c'),
         [
           for (final a in lastCell.attributes)
-            if (const ['r', 's'].contains('${a.name}')) a.copy()
+            if (a.name.local == 's') a.copy(),
+          for (final a in cell.attributes) if (a.name.local != 's') a.copy(),
         ],
         cell.children.map((c) => c.copy()),
       );
