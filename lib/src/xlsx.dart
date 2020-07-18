@@ -565,7 +565,10 @@ class XlsxDecoder extends SpreadsheetDecoder {
     if (lastCell != null && keepAttributes) {
       cell = XmlElement(
         XmlName('c'),
-        lastCell.attributes.map((a) => a.copy()),
+        [
+          for (final a in lastCell.attributes)
+            if (const ['r', 's'].contains('${a.name}')) a.copy()
+        ],
         cell.children.map((c) => c.copy()),
       );
     }
